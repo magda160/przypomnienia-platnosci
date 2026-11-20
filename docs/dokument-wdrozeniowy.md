@@ -41,6 +41,34 @@ Kierowniczka działu (właścicielka procesu) i 2 pracowników. Zwykle ok. 50 fa
 Szacowany ROI w pierwszym roku: ok. 590% (oszczędność ok. 22 000 zł, koszt budowy i utrzymania ok. 3 200 zł). Zwrot kosztów budowy po ok. 5 tygodniach.
 
 ## 2. Dane i testy
+
+### 2.1 Dane wejściowe i ich sprawdzanie
+| Pole | Wymagane? | Jak sprawdzamy i ujednolicamy |
+|---|---|---|
+| Numer KSeF | tak | niepusty, nie powtarza się w pliku |
+| Nazwa klienta | tak | niepusta |
+| E-mail klienta | tak | jedno „@” i kropka po nim, bez spacji; zamiana na małe litery |
+| Kwota | tak | liczba większa od 0; przecinek zamieniany na kropkę |
+| Kwota zapłacona | nie (puste = 0) | liczba od 0 do wartości kwoty faktury |
+| Termin płatności | tak | poprawna data; zapis w formacie RRRR-MM-DD |
+| Status | tak | jedna z wartości: nieopłacona / opłacona / opłacona częściowo; usuwanie spacji, ujednolicenie wielkości liter |
+| Ugoda (raty) | tak (domyślnie „nie”) | tylko tak/nie (pole do zaznaczenia) |
+| Uwagi | nie | dowolny tekst; aplikacja nie bierze go pod uwagę przy decyzjach |
+
+Sprawdzenie spójności: status musi pasować do kwot. Jeśli się nie zgadzają (np. kwota zapłacona równa kwocie faktury, a status „nieopłacona”), wiersz jest oznaczany do sprawdzenia przez człowieka.
+
+### 2.2 Nietypowe przypadki
+| Sytuacja | Decyzja | Uzasadnienie |
+|---|---|---|
+| Brak e-maila klienta | przekazać człowiekowi | wiersz trafia na listę „do uzupełnienia”, reszta pliku wgrywa się normalnie |
+| Ta sama faktura (numer KSeF) dwa razy w pliku | identyczne wiersze: poprawić automatycznie (zostaje jeden); różne: przekazać człowiekowi | nie wiadomo, który wiersz jest prawdziwy |
+| Kwota zapłacona większa niż kwota faktury | przekazać człowiekowi | może to być błąd wpisu albo nadpłata do zwrotu |
+| Nieznane słowo w statusie (np. „zapłacone”) | poprawić automatycznie tylko według stałej listy znanych słów; nieznane: przekazać człowiekowi | szukanie fragmentu tekstu jest niebezpieczne („niezapłacone” zawiera „zapłacone”) |
+| Klient ma kilka zaległych faktur | jeden zbiorczy mail z listą faktur, ton według najstarszej zaległości; faktury 30+ dni osobno „do prawnika” | klient nie dostaje kilku maili naraz |
+| Plik z danymi nie jest z dzisiaj | przepuścić z oznaczeniem | na ekranie widać „Dane z dnia: …” i ostrzeżenie; pracownik sprawdza wpłaty przed wysłaniem |
+| Klient z ugodą nie zapłacił raty | poza zakresem wersji 1 | raty z ugód prowadzi ręcznie opiekun ugód; do rozważenia w wersji 2 |
+
+### 2.3 Scenariusze testowe
 [DO UZUPEŁNIENIA]
 
 ## 3. Awarie
