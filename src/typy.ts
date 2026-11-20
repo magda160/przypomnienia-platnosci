@@ -68,6 +68,20 @@ export interface Faktura {
   doPrawnika: PrzekazanieDoPrawnika | null
 }
 
+/** Pola faktury, które pochodzą z pliku (kolumny eksportu). */
+export type PoleZPliku =
+  | 'numerKsef'
+  | 'nazwaKlienta'
+  | 'email'
+  | 'kwota'
+  | 'terminPlatnosci'
+  | 'status'
+  | 'kwotaZaplacona'
+  | 'uwagi'
+
+/** Dane faktury z pliku po sprawdzeniu i ujednoliceniu (bez pól prowadzonych w aplikacji). */
+export type DaneFakturyZPliku = Pick<Faktura, PoleZPliku>
+
 /** Liczby wierszy z jednego wgrania pliku. */
 export interface LiczbyWierszy {
   /** Wszystkie wiersze z danymi w pliku. */
