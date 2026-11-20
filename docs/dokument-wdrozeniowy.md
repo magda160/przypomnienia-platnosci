@@ -57,6 +57,12 @@ Szacowany ROI w pierwszym roku: ok. 590% (oszczędność ok. 22 000 zł, koszt b
 
 Sprawdzenie spójności: status musi pasować do kwot. Jeśli się nie zgadzają (np. kwota zapłacona równa kwocie faktury, a status „nieopłacona”), wiersz jest oznaczany do sprawdzenia przez człowieka.
 
+#### Ustalenia z działem (krok 3)
+1. **Do uzupełnienia czy do sprawdzenia.** Jeśli w wierszu czegoś brakuje albo pole jest źle wpisane (np. e-mail bez „@”, kwota „abc”, nieistniejąca data), wiersz trafia **do uzupełnienia**. Jeśli dane się wykluczają albo nie wiadomo, co jest prawdą (nieznany status, nadpłata, status niezgodny z kwotami), wiersz trafia **do sprawdzenia**. Gdy wiersz ma problemy obu rodzajów, trafia do sprawdzenia, a przy nim widać wszystkie komunikaty.
+2. **Faktura „opłacona” z pustą kolumną „Zapłacono” jest poprawna.** Eksport często nie wypełnia tej kolumny przy opłaconych fakturach. Niezgodność zgłaszamy tylko wtedy, gdy przy statusie „opłacona” zapłacono mniej niż wynosi faktura.
+3. **Daty.** Przyjmujemy zapis RRRR-MM-DD (np. 2026-11-18), zapis polski DD.MM.RRRR (np. 18.11.2026) i daty zapisane w Excelu jako data. Rok musi być z przedziału 2000–2099, żeby np. kwota wpisana przez pomyłkę w kolumnę daty nie zamieniła się w datę z 1902 roku.
+4. **Kwoty.** Eksport podaje kwoty jako „1 234,56” albo „1234,56” i oba zapisy są poprawne. Zapisu „1.234,56” (kropka i przecinek naraz) eksport nie używa, więc traktujemy go jako błąd do uzupełnienia.
+
 ### 2.2 Nietypowe przypadki
 | Sytuacja | Decyzja | Uzasadnienie |
 |---|---|---|
