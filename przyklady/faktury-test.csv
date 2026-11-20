@@ -1,0 +1,18 @@
+﻿Numer KSeF;Kontrahent;E-mail;Kwota brutto;Termin płatności;Status;Zapłacono;Uwagi
+9990000001-20261104-A01003-25;Kwiaciarnia Fioletowy Żuraw;kwiaty.zuraw@example.com;850,00;2026-11-18;nieopłacona;;
+9990000002-20261101-A02006-4A;Piekarnia Złoty Kłos Testowa;piekarnia.klos@example.com;1200,00;2026-11-15;nieopłacona;;
+9990000003-20261021-A03009-6F;Piekarnia Złoty Kłos Testowa;Piekarnia.Klos@Example.com;2340,50;2026-11-04;Nieopłacona;;
+9990000004-20261002-A0400C-94;Piekarnia Złoty Kłos Testowa;piekarnia.klos@example.com;980,00;2026-10-16;nieopłacona;;
+9990000005-20261017-A0500F-B9;Studio Tańca Wirujący Jeż;studio.jez@example.com;1750,00;2026-10-31;nieopłacona;;Nie dostał jeszcze żadnego przypomnienia
+9990000006-20261027-A06012-DE;Warsztat Rowerowy Szybka Dętka;serwis.detka@example.com;3000,00;2026-11-10;opłacona częściowo;1000,00;Wpłata 1000 zł
+9990000007-20261030-A07015-03;Antykwariat Kurz i Papier;;420,00;2026-11-13;nieopłacona;;
+9990000008-20261102-A08018-28;Pralnia Mydlana Bańka;pralnia.banka@example.com;315,20;2026-11-16;nieopłacona;;
+9990000008-20261102-A08018-28;Pralnia Mydlana Bańka;pralnia.banka@example.com;315,20;2026-11-16;nieopłacona;;
+9990000009-20261028-A0901B-4D;Księgarnia Zielony Atrament;atrament@example.com;1500,00;2026-11-11;nieopłacona;;
+9990000009-20261028-A0901B-4D;Księgarnia Zielony Atrament;atrament@example.com;1550,00;2026-11-11;nieopłacona;;
+9990000010-20261023-A0A01E-72;Cukiernia Lukrowy Rożek;cukiernia.rozek@example.com;640,00;2026-11-06;opłacona;700,00;
+9990000011-20261029-A0B021-97;Szkółka Leśna Mchy i Porosty;szkolka.mchy@example.com;2100,00;2026-11-12;zapłacone;2100,00;
+9990000012-20261022-A0C024-BC;Lodziarnia Mroźny Pingwin;lody.pingwin@example.com;560,75;2026-11-05;niezapłacone;;
+9990000013-20261029-A0D027-E1;Pracownia Stolarska Wiórek;stolarnia.wiorek@example.com;4200,00;2026-11-12;w windykacji;;
+9990000014-20261026-A0E02A-06;Galeria Ramek Złota Krawędź;ramki.krawedz@example.com;890,00;2026-11-09;nieopłacona;890,00;
+9990000015-20260922-A0F02D-2B;Hotel dla Psów Merdający Ogon;hotel.ogon@example.com;5600,00;2026-10-06;nieopłacona;;Ugoda ratalna – zaznaczyć w aplikacji pole „Ugoda (raty)”
