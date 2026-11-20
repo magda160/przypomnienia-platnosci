@@ -1,0 +1,23 @@
+# Zależności i wyniki budowania
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Logi
+*.log
+npm-debug.log*
+
+# Pliki edytorów i systemu
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Zmienne środowiskowe
+.env
+.env.*
+
+# Lokalne ustawienia Claude Code
+.claude/settings.local.json
