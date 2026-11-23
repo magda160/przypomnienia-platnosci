@@ -8,12 +8,16 @@ import { walidujWiersz, type GrupaWiersza, type ProblemWiersza } from './walidac
  * (poprawne / do uzupełnienia / do sprawdzenia) + obsługa powtórzonych numerów KSeF
  * według rozdz. 2.2 dokumentu wdrożeniowego:
  * - identyczne wiersze z tym samym numerem KSeF → zostaje pierwszy, reszta usunięta automatycznie,
- * - różne wiersze z tym samym numerem KSeF → wszystkie trafiają „do sprawdzenia” (nie wiadomo, który jest prawdziwy).
+ * - różne wiersze z tym samym numerem KSeF → JEDNA pozycja „do sprawdzenia”, w której widać wszystkie te wiersze
+ *   (nie wiadomo, który jest prawdziwy).
+ *
+ * Liczby w podsumowaniu liczymy w FAKTURACH (po numerze KSeF), nie w wierszach pliku —
+ * wyjątkiem jest `liczby.wszystkie`, czyli liczba wierszy z danymi w pliku.
  *
  * Scalanie z danymi zapisanymi wcześniej w aplikacji to osobny krok (krok 6).
  */
 
-/** Jeden wiersz pliku po sprawdzeniu. */
+/** Jeden wiersz pliku po sprawdzeniu (wynik walidacji tego jednego wiersza). */
 export interface WierszImportu {
   /** Numer wiersza tak, jak widać go w Excelu (nagłówek = wiersz 1). */
   numerWiersza: number
@@ -26,6 +30,22 @@ export interface WierszImportu {
 export interface WierszPoprawny extends WierszImportu {
   grupa: 'poprawne'
   dane: DaneFakturyZPliku
+}
+
+/**
+ * Jedna faktura „do sprawdzenia”. Zwykle to jeden wiersz pliku; przy różnym duplikacie
+ * (ten sam numer KSeF, różne dane) — wszystkie wiersze z tym numerem.
+ */
+export interface PozycjaDoSprawdzenia {
+  /** Numer KSeF faktury; null, gdy wiersz go nie ma. */
+  numerKsef: string | null
+  /**
+   * Komunikaty dla całej pozycji. Pojedynczy wiersz: jego problemy.
+   * Różny duplikat: komunikat o powtórzonym numerze (problemy poszczególnych wierszy są przy wierszach).
+   */
+  problemy: ProblemWiersza[]
+  /** Wiersze pliku tej faktury, w kolejności z pliku. Każdy ma swoje dane i własne problemy. */
+  wiersze: WierszImportu[]
 }
 
 /** Identyczny duplikat usunięty automatycznie. */
@@ -48,7 +68,7 @@ export type WynikImportu =
       rodzaj: 'ok'
       poprawne: WierszPoprawny[]
       doUzupelnienia: WierszImportu[]
-      doSprawdzenia: WierszImportu[]
+      doSprawdzenia: PozycjaDoSprawdzenia[]
       usunieteDuplikaty: UsunietyDuplikat[]
       liczby: LiczbyWierszy
     }
@@ -102,8 +122,11 @@ export function importujWiersze(tabela: readonly (readonly unknown[])[]): WynikI
     else wgrupach.set(klucz, [w])
   }
 
-  const usuniete = new Set<WierszImportu>()
+  /** Wiersze, które nie idą dalej jako osobne faktury (usunięte powtórzenia i wiersze różnych duplikatów). */
+  const pominiete = new Set<WierszImportu>()
   const usunieteDuplikaty: UsunietyDuplikat[] = []
+  /** Różne duplikaty: pozycja „do sprawdzenia” przypisana do pierwszego wiersza (dla zachowania kolejności z pliku). */
+  const duplikatyRozne = new Map<WierszImportu, PozycjaDoSprawdzenia>()
 
   for (const lista of wgrupach.values()) {
     if (lista.length < 2) continue
@@ -113,7 +136,7 @@ export function importujWiersze(tabela: readonly (readonly unknown[])[]): WynikI
 
     if (wszystkieIdentyczne) {
       for (const w of lista.slice(1)) {
-        usuniete.add(w)
+        pominiete.add(w)
         usunieteDuplikaty.push({
           numerWiersza: w.numerWiersza,
           numerKsef: pierwszy.dane.numerKsef!,
@@ -122,24 +145,35 @@ export function importujWiersze(tabela: readonly (readonly unknown[])[]): WynikI
       }
     } else {
       const numery = lista.map((w) => w.numerWiersza).join(', ')
-      for (const w of lista) {
-        w.problemy.push({
-          pole: 'numerKsef',
-          grupa: 'doSprawdzenia',
-          komunikat:
-            `Numer KSeF ${pierwszy.dane.numerKsef} występuje w pliku kilka razy z różnymi danymi (wiersze ${numery}). ` +
-            'Sprawdź, który wiersz jest prawdziwy, i usuń lub popraw pozostałe.',
-        })
-        w.grupa = 'doSprawdzenia'
-      }
+      for (const w of lista) pominiete.add(w)
+      duplikatyRozne.set(pierwszy, {
+        numerKsef: pierwszy.dane.numerKsef!,
+        problemy: [
+          {
+            pole: 'numerKsef',
+            grupa: 'doSprawdzenia',
+            komunikat:
+              `Numer KSeF ${pierwszy.dane.numerKsef} występuje w pliku kilka razy z różnymi danymi (wiersze ${numery}). ` +
+              'Sprawdź, który wiersz jest prawdziwy, i usuń lub popraw pozostałe.',
+          },
+        ],
+        wiersze: lista,
+      })
     }
   }
 
-  // 3. Podział na grupy.
-  const pozostale = wiersze.filter((w) => !usuniete.has(w))
-  const poprawne = pozostale.filter((w): w is WierszPoprawny => w.grupa === 'poprawne')
-  const doUzupelnienia = pozostale.filter((w) => w.grupa === 'doUzupelnienia')
-  const doSprawdzenia = pozostale.filter((w) => w.grupa === 'doSprawdzenia')
+  // 3. Podział na grupy (w kolejności z pliku).
+  const poprawne: WierszPoprawny[] = []
+  const doUzupelnienia: WierszImportu[] = []
+  const doSprawdzenia: PozycjaDoSprawdzenia[] = []
+  for (const w of wiersze) {
+    const duplikat = duplikatyRozne.get(w)
+    if (duplikat) doSprawdzenia.push(duplikat)
+    else if (pominiete.has(w)) continue
+    else if (w.grupa === 'poprawne') poprawne.push(w as WierszPoprawny)
+    else if (w.grupa === 'doUzupelnienia') doUzupelnienia.push(w)
+    else doSprawdzenia.push({ numerKsef: w.dane.numerKsef ?? null, problemy: w.problemy, wiersze: [w] })
+  }
 
   return {
     rodzaj: 'ok',

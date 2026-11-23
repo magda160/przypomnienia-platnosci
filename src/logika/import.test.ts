@@ -20,12 +20,13 @@ describe.each(['faktury-test.csv', 'faktury-test.xlsx'])('Plik testowy %s', (naz
   const wynik = ok(importujPlik(new Uint8Array(zawartosc), nazwa))
   const numery = (lista: { dane: { numerKsef?: string } }[]) => lista.map((w) => w.dane.numerKsef!.slice(0, 10))
 
-  it('daje oczekiwane liczby w każdej grupie', () => {
+  // Oczekiwanie zapisane w przyklady/README.md (liczone w fakturach, po numerze KSeF).
+  it('daje oczekiwane liczby w każdej grupie: 10 / 1 / 4 / 1 usunięte powtórzenie', () => {
     expect(wynik.liczby).toEqual({
-      wszystkie: 17,
+      wszystkie: 17, // wiersze z danymi w pliku
       poprawne: 10,
       doUzupelnienia: 1,
-      doSprawdzenia: 5,
+      doSprawdzenia: 4,
       usunieteDuplikaty: 1,
     })
   })
@@ -35,8 +36,20 @@ describe.each(['faktury-test.csv', 'faktury-test.xlsx'])('Plik testowy %s', (naz
     expect(wynik.doUzupelnienia[0].problemy[0].pole).toBe('email')
   })
 
-  it('do sprawdzenia: różny duplikat (oba wiersze), nadpłata, nieznany status, status niezgodny z kwotami', () => {
-    expect(numery(wynik.doSprawdzenia)).toEqual(['9990000009', '9990000009', '9990000010', '9990000013', '9990000014'])
+  it('do sprawdzenia: różny duplikat (jedna pozycja), nadpłata, nieznany status, status niezgodny z kwotami', () => {
+    expect(wynik.doSprawdzenia.map((p) => p.numerKsef!.slice(0, 10))).toEqual([
+      '9990000009',
+      '9990000010',
+      '9990000013',
+      '9990000014',
+    ])
+  })
+
+  it('różny duplikat to jedna pozycja, w której widać oba wiersze z ich kwotami', () => {
+    const duplikat = wynik.doSprawdzenia[0]
+    expect(duplikat.wiersze.map((w) => w.numerWiersza)).toEqual([11, 12])
+    expect(duplikat.wiersze.map((w) => w.dane.kwota)).toEqual([1500, 1550])
+    expect(duplikat.problemy[0].komunikat).toContain('wiersze 11, 12')
   })
 
   it('identyczny duplikat zostaje jeden raz, a usunięty wiersz jest zapisany', () => {
@@ -84,24 +97,38 @@ describe('2.2 Ta sama faktura dwa razy w pliku', () => {
     expect(w.liczby.poprawne).toBe(1)
   })
 
-  it('różne wiersze → wszystkie do sprawdzenia, z komunikatem wskazującym numery wierszy', () => {
-    const w = ok(importujWiersze([NAGLOWKI, wiersz('K1'), wiersz('K2'), wiersz('K1', { 3: '200,00' })]))
-    expect(w.liczby).toEqual({ wszystkie: 3, poprawne: 1, doUzupelnienia: 0, doSprawdzenia: 2, usunieteDuplikaty: 0 })
-    for (const d of w.doSprawdzenia) {
-      expect(d.problemy.at(-1)!.komunikat).toContain('wiersze 2, 4')
-    }
+  it('różne wiersze → jedna pozycja do sprawdzenia z wszystkimi wierszami i komunikatem z ich numerami', () => {
+    const w = ok(importujWiersze([NAGLOWKI, wiersz('K1'), wiersz('K2'), wiersz('K1', { 3: '200,00' }), wiersz('K1', { 3: '300,00' })]))
+    expect(w.liczby).toEqual({ wszystkie: 4, poprawne: 1, doUzupelnienia: 0, doSprawdzenia: 1, usunieteDuplikaty: 0 })
+    expect(w.poprawne.map((p) => p.dane.numerKsef)).toEqual(['K2'])
+    const [d] = w.doSprawdzenia
+    expect(d.numerKsef).toBe('K1')
+    expect(d.wiersze.map((r) => r.numerWiersza)).toEqual([2, 4, 5])
+    expect(d.problemy).toHaveLength(1)
+    expect(d.problemy[0]).toMatchObject({ pole: 'numerKsef', grupa: 'doSprawdzenia' })
+    expect(d.problemy[0].komunikat).toContain('wiersze 2, 4, 5')
   })
 
   it('numer KSeF porównywany bez spacji na brzegach i bez względu na wielkość liter', () => {
     const w = ok(importujWiersze([NAGLOWKI, wiersz('ab-1'), wiersz(' AB-1 ', { 3: '5,00' })]))
-    expect(w.liczby.doSprawdzenia).toBe(2)
+    expect(w.liczby.doSprawdzenia).toBe(1)
+    expect(w.doSprawdzenia[0].wiersze).toHaveLength(2)
   })
 
-  it('różny duplikat z brakami → do sprawdzenia (widać oba rodzaje problemów)', () => {
+  it('różny duplikat z brakami → jedna pozycja; braki widać przy wierszu, którego dotyczą', () => {
     const w = ok(importujWiersze([NAGLOWKI, wiersz('K1'), wiersz('K1', { 2: '' })]))
-    expect(w.liczby.doSprawdzenia).toBe(2)
-    const zBrakiem = w.doSprawdzenia.find((d) => d.numerWiersza === 3)!
-    expect(zBrakiem.problemy.map((p) => p.grupa)).toEqual(['doUzupelnienia', 'doSprawdzenia'])
+    expect(w.liczby).toEqual({ wszystkie: 2, poprawne: 0, doUzupelnienia: 0, doSprawdzenia: 1, usunieteDuplikaty: 0 })
+    const [pierwszy, zBrakiem] = w.doSprawdzenia[0].wiersze
+    expect(pierwszy.problemy).toEqual([])
+    expect(zBrakiem.problemy.map((p) => p.pole)).toEqual(['email'])
+  })
+
+  it('pojedynczy wiersz do sprawdzenia to pozycja z jednym wierszem i jego problemami', () => {
+    const w = ok(importujWiersze([NAGLOWKI, wiersz('K1', { 5: 'w windykacji' })]))
+    const [d] = w.doSprawdzenia
+    expect(d.numerKsef).toBe('K1')
+    expect(d.wiersze.map((r) => r.numerWiersza)).toEqual([2])
+    expect(d.problemy.map((p) => p.pole)).toEqual(['status'])
   })
 
   it('wiersze bez numeru KSeF nie są traktowane jako duplikaty', () => {

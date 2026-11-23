@@ -82,9 +82,12 @@ export type PoleZPliku =
 /** Dane faktury z pliku po sprawdzeniu i ujednoliceniu (bez pól prowadzonych w aplikacji). */
 export type DaneFakturyZPliku = Pick<Faktura, PoleZPliku>
 
-/** Liczby wierszy z jednego wgrania pliku. */
+/**
+ * Liczby z jednego wgrania pliku. Grupy liczymy w FAKTURACH (po numerze KSeF):
+ * różny duplikat (ten sam numer, różne dane) to jedna faktura „do sprawdzenia”.
+ */
 export interface LiczbyWierszy {
-  /** Wszystkie wiersze z danymi w pliku. */
+  /** Wszystkie wiersze z danymi w pliku (jedyna liczba liczona w wierszach). */
   wszystkie: number
   poprawne: number
   doUzupelnienia: number
